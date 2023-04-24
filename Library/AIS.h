@@ -59,6 +59,7 @@ namespace AIS {
 		bool processData(int len, TAG& tag);
 
 		bool canStop(int);
+		bool validateLength(int, int);
 
 		Message msg;
 

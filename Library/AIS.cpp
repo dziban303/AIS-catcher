@@ -58,25 +58,40 @@ namespace AIS {
 		return CRC == checksum;
 	}
 
+	bool Decoder::validateLength(int message_type, int message_length) {
+		const int min_lengths[] = {168, 168, 168, 168, 424, 88, 72, 56, 168, 72,
+							168, 72, 72, 40, 112, 96, 80, 168, 312, 72,
+							272, 168, 160, 160, 72, 60, 96};
+
+		if (message_type < 1 || message_type > 27) return false;
+
+		if (message_length < min_lengths[message_type - 1]) 
+			return false;
+
+    	return true;
+	}
+
 	bool Decoder::processData(int len, TAG& tag) {
-		if (len > 16 && CRC16(len)) {
-			nBits = len - 16;
-			nBytes = (nBits + 7) / 8;
+		nBits = len - 16;
 
-			if(msg.type() == 21 && nBits <= 272) return false;
-			
-			// calculate the power of the signal in dB, if requested and timestamp
-			if (tag.mode & 1 && tag.level != 0.0) tag.level = 10.0f * log10(tag.level);
-			if (tag.mode & 2) msg.Stamp();
+		if(!validateLength(msg.type(), nBits)) return false;
+		if (!CRC16(len)) return false;
+	
+		nBytes = (nBits + 7) / 8;
 
-			// Populate Byte array and send msg, exclude 16 FCS bits
-			msg.setChannel(channel);
-			msg.setLength(nBits);
-			msg.buildNMEA(tag);
-			Send(&msg, 1, tag);
-			return true;
-		}
-		return false;
+		// std::cerr << msg.type() << ":" << nBits << "\n";
+		
+		// calculate the power of the signal in dB, if requested and timestamp
+		if (tag.mode & 1 && tag.level != 0.0) tag.level = 10.0f * log10(tag.level);
+		if (tag.mode & 2) msg.Stamp();
+
+		// Populate Byte array and send msg, exclude 16 FCS bits
+		msg.setChannel(channel);
+		msg.setLength(nBits);
+		msg.buildNMEA(tag);
+		Send(&msg, 1, tag);
+		return true;
+
 	}
 
 	void Decoder::Signal(const DecoderSignals& in) {
