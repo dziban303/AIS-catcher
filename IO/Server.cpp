@@ -260,10 +260,11 @@ namespace IO {
 		Response(c, type, (char*)content.c_str(), content.size());
 	}
 
-	void Server::Response(Client& c, std::string type, char* data, int len, bool gzip) {
+	void Server::Response(Client& c, std::string type, char* data, int len, bool gzip, std::string header_add) {
 
 		std::string header = "HTTP/1.1 200 OK\r\nServer: AIS-catcher\r\nContent-Type: " + type;
 		if (gzip) header += "\r\nContent-Encoding: gzip";
+		header += header_add;
 		header += "\r\nConnection: keep-alive\r\nContent-Length: " + std::to_string(len) + "\r\nAccess-Control-Allow-Origin: *\r\n\r\n";
 
 		if (!Send(c.sock, header.c_str(), header.length())) {

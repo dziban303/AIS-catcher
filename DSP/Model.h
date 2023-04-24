@@ -71,7 +71,7 @@ namespace AIS {
 		Util::PassThrough<GPS> output_gps;
 
 	public:
-		virtual void buildModel(char, char, int, bool, Device::Device* d) { device = d; }
+		virtual void buildModel(char, char, int, bool, Device::Device* d, bool) { device = d; }
 
 		StreamOut<Message>& Output() { return output; }
 		StreamOut<GPS>& OutputGPS() { return output_gps; }
@@ -84,6 +84,7 @@ namespace AIS {
 		virtual Setting& Set(std::string option, std::string arg) { throw std::runtime_error("Model: unknown setting."); }
 		virtual std::string Get() { return ""; }
 		virtual ModelClass getClass() { return ModelClass::IQ; }
+		virtual DSP::Recorder* getRecorder() { return NULL; }
 	};
 
 
@@ -102,6 +103,8 @@ namespace AIS {
 		// fixed point downsamplers
 		DSP::Downsample16_CU8 DS16_CU8;
 
+		DSP::Recorder* recorder = NULL;
+
 		Util::ConvertRAW convert;
 
 	protected:
@@ -116,10 +119,12 @@ namespace AIS {
 		DSP::Rotate ROT;
 
 	public:
-		void buildModel(char, char, int, bool, Device::Device*);
+		void buildModel(char, char, int, bool, Device::Device*, bool);
 
 		Setting& Set(std::string option, std::string arg);
 		std::string Get();
+		virtual DSP::Recorder* getRecorder() { return recorder; }
+
 	};
 
 	// Standard demodulation model, FM with brute-force timing recovery
@@ -131,7 +136,7 @@ namespace AIS {
 		DSP::Deinterleave<FLOAT32> S_a, S_b;
 
 	public:
-		void buildModel(char, char, int, bool, Device::Device*);
+		void buildModel(char, char, int, bool, Device::Device*, bool);
 	};
 
 
@@ -143,7 +148,7 @@ namespace AIS {
 		AIS::Decoder DEC_a, DEC_b;
 
 	public:
-		void buildModel(char, char, int, bool, Device::Device*);
+		void buildModel(char, char, int, bool, Device::Device*,bool);
 	};
 
 	// Simple model embedding some elements of a coherent model with local phase estimation
@@ -164,7 +169,7 @@ namespace AIS {
 		bool CGF_wide = false;
 
 	public:
-		void buildModel(char, char, int, bool, Device::Device*);
+		void buildModel(char, char, int, bool, Device::Device*, bool);
 		Setting& Set(std::string option, std::string arg);
 		std::string Get();
 	};
@@ -186,7 +191,7 @@ namespace AIS {
 		bool PS_EMA = true;
 
 	public:
-		void buildModel(char, char, int, bool, Device::Device*);
+		void buildModel(char, char, int, bool, Device::Device*, bool);
 		Setting& Set(std::string option, std::string arg);
 		std::string Get();
 	};
@@ -204,7 +209,7 @@ namespace AIS {
 		Util::ConvertRAW convert;
 
 	public:
-		void buildModel(char, char, int, bool, Device::Device*);
+		void buildModel(char, char, int, bool, Device::Device*, bool);
 		ModelClass getClass() { return ModelClass::FM; }
 	};
 
@@ -213,7 +218,7 @@ namespace AIS {
 		NMEA nmea;
 
 	public:
-		void buildModel(char, char, int, bool, Device::Device*);
+		void buildModel(char, char, int, bool, Device::Device*, bool);
 		Setting& Set(std::string option, std::string arg);
 		std::string Get();
 		ModelClass getClass() { return ModelClass::TXT; }

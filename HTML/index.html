@@ -1073,6 +1073,7 @@
                         <li id="setting1" onclick="selectSetting(1)">Not implemented yet<span class="marker"><i class="fas fa-check"></i></span></li>
                     </ul>
                 </li>
+                <li class="general" onclick="downloadSignal()"><i class="fas fa-wave-square"></i>Download Raw Signal</li>
                 <li class="divider mmsi"></li>
                 <li class="mmsi-map"><i class="fas fa-crosshairs"></i>Pin to center</li>
                 <li class="mmsi-map" onclick="mapResetView(13,context_mmsi)"><i class="fas fa-bullseye"></i>Focus</li>
@@ -1422,6 +1423,10 @@
 
         function copyMMSI(m) {
             copyClipboard(m);
+        }
+
+        function downloadSignal() {
+            window.open("record.raw");
         }
 
         function openGoogleSearch(m) {

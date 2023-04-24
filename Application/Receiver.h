@@ -65,6 +65,7 @@ class Receiver {
 	Type type = Type::NONE;
 	std::string serial;
 	int sample_rate = 0, bandwidth = 0, ppm = 0;
+	bool record = false;
 	Device::Device* getDeviceByType(Type type);
 
 	//  Models
@@ -135,7 +136,7 @@ public:
 	void setSampleRate(int s) { sample_rate = s; }
 	void setBandwidth(int b) { bandwidth = b; }
 	void setPPM(int p) { ppm = p; }
-
+	void setRecording(bool b) { record = b; }
 	Type& InputType() {
 		return type;
 	}
@@ -240,6 +241,7 @@ class WebClient : public IO::Server, public Setting {
 	bool port_set = false;
 	bool use_zlib = true;
 	bool supportPrometheus = false;
+	DSP::Recorder* recorder = NULL;
 
 	std::string params = "build_string = '" + std::string(VERSION_DESCRIBE) + "';\naboutMDpresent=false;\n\n";
 	std::string plugins;

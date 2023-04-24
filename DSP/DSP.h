@@ -159,6 +159,31 @@ namespace DSP {
 		void Receive(const CFLOAT32* data, int len, TAG& tag);
 	};
 
+	class Recorder : public SimpleStreamInOut<CFLOAT32, CFLOAT32> {
+		std::vector<CFLOAT32> buffer;
+		int idx = 0;
+		const int N = 96000 * 30; // 30 second buffer at 96kpbs
+
+public:
+		void Receive(const CFLOAT32* data, int len, TAG& tag) {
+			if(buffer.size() != N) buffer.resize(N, 0.0f);
+
+			for(int i = 0; i < len; i++) {
+				buffer[idx++] = data[i];
+				if(idx == N) idx = 0;
+			}
+			Send(data, len, tag);
+		}
+
+		void Get(std::vector<CFLOAT32> &out) {
+			out.resize(buffer.size());
+
+			// Copy the buffer
+			for (int i = 0; i < N; i++)
+				out[i] = buffer[(i + idx) % N];
+		}
+	};
+
 	class FilterComplex : public SimpleStreamInOut<CFLOAT32, CFLOAT32> {
 		std::vector<CFLOAT32> output;
 

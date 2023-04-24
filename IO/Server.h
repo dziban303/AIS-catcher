@@ -70,7 +70,7 @@ namespace IO {
 		virtual void Request(Client& c, const std::string& msg, bool accept_gzip);
 
 		void Response(Client& c, std::string type, const std::string& content, bool gzip = false);
-		void Response(Client& c, std::string type, char* data, int len, bool gzip = false);
+		void Response(Client& c, std::string type, char* data, int len, bool gzip = false, std::string header_add = "");
 
 		bool start(int port);
 		void setReusePort(bool b) { reuse_port = b; }

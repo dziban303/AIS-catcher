@@ -23,7 +23,7 @@
 namespace AIS {
 	std::mutex MessageMutex::mtx;
 
-	void ModelFrontend::buildModel(char CH1, char CH2, int sample_rate, bool timerOn, Device::Device* dev) {
+	void ModelFrontend::buildModel(char CH1, char CH2, int sample_rate, bool timerOn, Device::Device* dev, bool record) {
 		device = dev;
 
 		if (sample_rate < 96000 || sample_rate > 12288000)
@@ -62,9 +62,11 @@ namespace AIS {
 
 			physical >> convert;
 
+			if (record) recorder = new DSP::Recorder();
+
 			// FDC is a 3-tap filter to compensate for droop in the CIC5 downsampling filters
 			// Filter coefficients currently set on empirical basis, and ignored for downsampling including decimation by 3
-
+			
 			switch (bucket - (interpolated ? 1 : 0)) {
 				// 2^7
 			case 12288000:
@@ -132,10 +134,20 @@ namespace AIS {
 			case 1536000:
 				FDC.setTaps(-1.2f);
 				if (!fixedpointDS) {
-					if (!droop_compensation)
+					if (!droop_compensation) {
 						convert >> DS2_4 >> DS2_3 >> DS2_2 >> DS2_1 >> ROT;
-					else
+						if (recorder) {
+							std::cerr << "Creating and linking Recorder\n";
+							DS2_1 >> *recorder;
+						}
+					}
+					else {
 						convert >> DS2_4 >> DS2_3 >> DS2_2 >> DS2_1 >> FDC >> ROT;
+						if (recorder) {
+							std::cerr << "Creating and linking Recorder\n";
+							FDC >> *recorder;
+						}
+					}
 				}
 				else {
 					if (!droop_compensation)
@@ -146,10 +158,12 @@ namespace AIS {
 				break;
 			case 1536000 - 1:
 				FDC.setTaps(-1.2f);
-				if (!droop_compensation)
+				if (!droop_compensation) {
 					convert >> DS2_4 >> DS2_3 >> US >> DS2_2 >> DS2_1 >> ROT;
-				else
+				}
+				else {
 					convert >> DS2_4 >> DS2_3 >> US >> DS2_2 >> DS2_1 >> FDC >> ROT;
+				}
 				break;
 
 				// 2^2 * 3
@@ -223,10 +237,20 @@ namespace AIS {
 				// 2^1
 			case 192000:
 				FDC.setTaps(-0.8f);
-				if (!droop_compensation)
+				if (!droop_compensation) {
 					convert >> DS2_1 >> ROT;
-				else
+					if (recorder) {
+						std::cerr << "Creating and linking Recorder\n";
+						DS2_1 >> *recorder;
+					}
+				}
+				else {
 					convert >> DS2_1 >> FDC >> ROT;
+					if (recorder) {
+						std::cerr << "Creating and linking Recorder\n";
+						FDC >> *recorder;
+					}
+				}
 				break;
 			case 192000 - 1:
 				FDC.setTaps(-0.8f);
@@ -292,8 +316,8 @@ namespace AIS {
 		return "droop " + Util::Convert::toString(droop_compensation) + " fp_ds " + Util::Convert::toString(fixedpointDS) + " " + Model::Get();
 	}
 
-	void ModelBase::buildModel(char CH1, char CH2, int sample_rate, bool timerOn, Device::Device* dev) {
-		ModelFrontend::buildModel(CH1, CH2, sample_rate, timerOn, dev);
+	void ModelBase::buildModel(char CH1, char CH2, int sample_rate, bool timerOn, Device::Device* dev, bool r) {
+		ModelFrontend::buildModel(CH1, CH2, sample_rate, timerOn, dev,r);
 		setName("Base (non-coherent)");
 
 		assert(C_a != NULL && C_b != NULL);
@@ -313,8 +337,8 @@ namespace AIS {
 		return;
 	}
 
-	void ModelStandard::buildModel(char CH1, char CH2, int sample_rate, bool timerOn, Device::Device* dev) {
-		ModelFrontend::buildModel(CH1, CH2, sample_rate, timerOn, dev);
+	void ModelStandard::buildModel(char CH1, char CH2, int sample_rate, bool timerOn, Device::Device* dev, bool r) {
+		ModelFrontend::buildModel(CH1, CH2, sample_rate, timerOn, dev,r);
 		setName("Standard (non-coherent)");
 
 		assert(C_a != NULL && C_b != NULL);
@@ -349,8 +373,8 @@ namespace AIS {
 		return;
 	}
 
-	void ModelDefault::buildModel(char CH1, char CH2, int sample_rate, bool timerOn, Device::Device* dev) {
-		ModelFrontend::buildModel(CH1, CH2, sample_rate, timerOn, dev);
+	void ModelDefault::buildModel(char CH1, char CH2, int sample_rate, bool timerOn, Device::Device* dev, bool rec) {
+		ModelFrontend::buildModel(CH1, CH2, sample_rate, timerOn, dev, rec);
 
 		setName("AIS engine " VERSION);
 
@@ -429,8 +453,8 @@ namespace AIS {
 		return "ps_ema " + Util::Convert::toString(PS_EMA) + " afc_wide " + Util::Convert::toString(CGF_wide) + " " + ModelFrontend::Get();
 	}
 
-	void ModelChallenger::buildModel(char CH1, char CH2, int sample_rate, bool timerOn, Device::Device* dev) {
-		ModelFrontend::buildModel(CH1, CH2, sample_rate, timerOn, dev);
+	void ModelChallenger::buildModel(char CH1, char CH2, int sample_rate, bool timerOn, Device::Device* dev, bool r) {
+		ModelFrontend::buildModel(CH1, CH2, sample_rate, timerOn, dev,r);
 
 		setName("AIS engine " VERSION);
 
@@ -506,7 +530,7 @@ namespace AIS {
 		return "ps_ema " + Util::Convert::toString(PS_EMA) + " " + ModelFrontend::Get();
 	}
 
-	void ModelDiscriminator::buildModel(char CH1, char CH2, int sample_rate, bool timerOn, Device::Device* dev) {
+	void ModelDiscriminator::buildModel(char CH1, char CH2, int sample_rate, bool timerOn, Device::Device* dev, bool) {
 		setName("FM discriminator output model");
 
 		device = dev;
@@ -554,7 +578,7 @@ namespace AIS {
 		return;
 	}
 
-	void ModelNMEA::buildModel(char CH1, char CH2, int sample_rate, bool timerOn, Device::Device* dev) {
+	void ModelNMEA::buildModel(char CH1, char CH2, int sample_rate, bool timerOn, Device::Device* dev, bool) {
 		setName("NMEA input");
 		device = dev;
 		*device >> nmea >> output;

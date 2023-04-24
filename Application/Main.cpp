@@ -247,6 +247,10 @@ int main(int argc, char* argv[]) {
 				Assert(count == 1, param, "does require one parameter [sample rate].");
 				receiver.setSampleRate(Util::Parse::Integer(arg1, 48000, 12288000));
 				break;
+			case 'I':
+				Assert(count == 0, param, "no parameters allowed");
+				receiver.setRecording(true);
+				break;
 			case 'm':
 				Assert(count == 1, param, "requires one parameter [model number].");
 				receiver.addModel(Util::Parse::Integer(arg1, 0, 5));

@@ -215,7 +215,7 @@ void Receiver::setupModel() {
 
 	// build the decoder models
 	for (auto& m : models)
-		m->buildModel(ChannelNMEA[0], ChannelNMEA[1], device->getSampleRate(), timing, device);
+		m->buildModel(ChannelNMEA[0], ChannelNMEA[1], device->getSampleRate(), timing, device, record);
 
 	// ensure some basic compatibility between model and device
 	for (const auto& m : models) {
@@ -510,6 +510,7 @@ void WebClient::connect(Receiver& r) {
 	vendor += (r.device->getVendor().empty() ? "-" : r.device->getVendor()) + "<br>";
 	serial += (r.device->getSerial().empty() ? "-" : r.device->getSerial()) + "<br>";
 	model += r.Model(0)->getName() + "<br>";
+	recorder = r.Model(0)->getRecorder();
 
 	// connect all the statistical counters
 	r.Output(0) >> counter;
@@ -657,6 +658,16 @@ void WebClient::Request(IO::Client& c, const std::string& response, bool gzip) {
 	else if (r == "/ships_array.json") {
 		std::string content = ships.getJSONcompact();
 		Response(c, "application/json", content, use_zlib & gzip);
+	}
+	else if (r == "/record.raw") {
+		if (recorder) {
+			std::vector<CFLOAT32> rec;
+			recorder->Get(rec);
+			Response(c, "application/octet-stream", (char*)rec.data(), rec.size() * sizeof(CFLOAT32), false, "Content-Disposition: attachment; filename=\"record.raw\"");
+		}
+		else {
+			Response(c, "application/text", std::string("recording not enabled."), use_zlib);
+		}
 	}
 	else if (r == "/ships_full.json") {
 
