@@ -58,15 +58,13 @@ namespace AIS {
 		return CRC == checksum;
 	}
 
-	bool Decoder::validateLength(int message_type, int message_length) {
+	bool Decoder::validateLength(int type, int len) {
 		const int min_lengths[] = {168, 168, 168, 168, 424, 88, 72, 56, 168, 72,
 							168, 72, 72, 40, 112, 96, 80, 168, 312, 72,
 							272, 168, 160, 160, 72, 60, 96};
 
-		if (message_type < 1 || message_type > 27) return false;
-
-		if (message_length < min_lengths[message_type - 1]) 
-			return false;
+		if (type < 1 || type > 27) return false;
+		if (len < min_lengths[type - 1]) return false;
 
     	return true;
 	}
