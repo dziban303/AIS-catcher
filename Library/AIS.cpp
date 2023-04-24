@@ -59,9 +59,8 @@ namespace AIS {
 	}
 
 	bool Decoder::validateLength(int type, int len) {
-		const int min_lengths[] = {168, 168, 168, 168, 424, 88, 72, 56, 168, 72,
-							168, 72, 72, 40, 112, 96, 80, 168, 312, 72,
-							272, 168, 160, 160, 72, 60, 96};
+
+		const int min_lengths[27] = {149, 149, 149, 168, 424, 88, 72, 56, 168, 70, 168, 72, 40, 40, 88, 92, 80, 168, 312, 70, 271, 145, 154, 160, 72, 60, 96};
 
 		if (type < 1 || type > 27) return false;
 		if (len < min_lengths[type - 1]) return false;
